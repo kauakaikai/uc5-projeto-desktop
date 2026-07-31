@@ -11,7 +11,7 @@ declare global {
 const appElement = document.getElementById('app') as HTMLDivElement
 
 appElement.innerHTML = `
-  <h1>Projeto Base Electron + Vite + TS</h1>
+  <h1>Projeto Integrador</h1>
   <button id="btn-ping">Enviar Ping IPC</button>
   <p id="resposta">Aguardando interação...</p>
 `
