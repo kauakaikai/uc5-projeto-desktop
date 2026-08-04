@@ -1,117 +1,131 @@
+import { pool } from './connection'
 import { Cliente, NovoCliente, Pet, NovoPet, Consulta, NovaConsulta, PetComTutor } from './types'
 
-let clientes: Cliente[] = []
-let pets: Pet[] = []
-let consultas: Consulta[] = []
-
-let proximoIdCliente = 1
-let proximoIdPet = 1
-let proximoIdConsulta = 1
-
-// Aba para Clientes
+// Aba de Clientes
 
 export async function listarClientes(): Promise<Cliente[]> {
-    return clientes
+  const resultado = await pool.query<Cliente>('SELECT * FROM clientes ORDER BY nome')
+  return resultado.rows
 }
 
 export async function criarCliente(dados: NovoCliente): Promise<Cliente> {
-    const cliente: Cliente = { id: proximoIdCliente++, ...dados }
-    clientes.push(cliente)
-    return cliente
+  const resultado = await pool.query<Cliente>(
+    'INSERT INTO clientes (nome, telefone, email) VALUES ($1, $2, $3) RETURNING *',
+    [dados.nome, dados.telefone, dados.email]
+  )
+  return resultado.rows[0]
 }
 
 export async function atualizarCliente(id: number, dados: NovoCliente): Promise<Cliente> {
-    const indice = clientes.findIndex((c) => c.id === id)
-    if (indice === -1) {
-        throw new Error(`Cliente ${id} não encontrado`)
-    }
-    clientes[indice] = { id, ...dados }
-    return clientes[indice]
+  const resultado = await pool.query<Cliente>(
+    'UPDATE clientes SET nome = $1, telefone = $2, email = $3 WHERE id = $4 RETURNING *',
+    [dados.nome, dados.telefone, dados.email, id]
+  )
+  if (resultado.rows.length === 0) {
+    throw new Error(`Cliente ${id} não encontrado.`)
+  }
+  return resultado.rows[0]
 }
 
 export async function excluirCliente(id: number): Promise<void> {
-    const temPet = pets.some((p) => p.id_cliente === id)
-    if (temPet) {
-        throw new Error("Não é possível excluir um cliente com pets cadastrados")
-    }
-    clientes = clientes.filter((c) => c.id !== id)
+  const temPet = await pool.query('SELECT id FROM pets WHERE id_cliente = $1 LIMIT 1', [id])
+  if ((temPet.rowCount ?? 0) > 0) {
+    throw new Error('Não é possível excluir um cliente com pets cadastrados.')
+  }
+  await pool.query('DELETE FROM clientes WHERE id = $1', [id])
 }
 
 // Aba de Pets
 
 export async function listarPetsPorCliente(idCliente: number): Promise<Pet[]> {
-    return pets.filter((p) => p.id_cliente === idCliente)
+  const resultado = await pool.query<Pet>(
+    'SELECT * FROM pets WHERE id_cliente = $1 ORDER BY nome',
+    [idCliente]
+  )
+  return resultado.rows
 }
 
 export async function criarPet(dados: NovoPet): Promise<Pet> {
-    const clienteExiste = clientes.some((c) => c.id === dados.id_cliente)
-    if (!clienteExiste) {
-        throw new Error("Tutor informado não existe")
-    }
-    const pet: Pet = {id: proximoIdPet++, ...dados}
-    pets.push(pet)
-    return pet
+  const clienteExiste = await pool.query('SELECT id FROM clientes WHERE id = $1', [dados.id_cliente])
+  if (clienteExiste.rowCount === 0) {
+    throw new Error('Tutor informado não existe.')
+  }
+  const resultado = await pool.query<Pet>(
+    'INSERT INTO pets (nome, especie, raca, id_cliente) VALUES ($1, $2, $3, $4) RETURNING *',
+    [dados.nome, dados.especie, dados.raca, dados.id_cliente]
+  )
+  return resultado.rows[0]
 }
 
 export async function atualizarPet(id: number, dados: NovoPet): Promise<Pet> {
-    const indice = pets.findIndex((p) => p.id === id)
-    if (indice === -1) {
-        throw new Error(`Pet ${id} não encontrado`)
-    }
-    pets[indice] = {id, ...dados}
-    return pets[indice]
+  const resultado = await pool.query<Pet>(
+    'UPDATE pets SET nome = $1, especie = $2, raca = $3, id_cliente = $4 WHERE id = $5 RETURNING *',
+    [dados.nome, dados.especie, dados.raca, dados.id_cliente, id]
+  )
+  if (resultado.rows.length === 0) {
+    throw new Error(`Pet ${id} não encontrado.`)
+  }
+  return resultado.rows[0]
 }
 
 export async function excluirPet(id: number): Promise<void> {
-    const temConsulta = consultas.some((c) => c.id_pet === id)
-    if (temConsulta) {
-        throw new Error("Não é possível excluir um pet com consultas registradas")
-    }
-    pets = pets.filter((p) => p.id !== id)
+  const temConsulta = await pool.query('SELECT id FROM consultas WHERE id_pet = $1 LIMIT 1', [id])
+  if ((temConsulta.rowCount ?? 0) > 0) {
+    throw new Error('Não é possível excluir um pet com consultas registradas.')
+  }
+  await pool.query('DELETE FROM pets WHERE id = $1', [id])
 }
 
-// Aba de Buscas
 export async function buscarPets(termo: string): Promise<PetComTutor[]> {
-    const termoBusca = termo.trim().toLowerCase()
-    if (!termoBusca) return []
+  const termoBusca = termo.trim()
+  if (!termoBusca) return []
 
-    return pets
-        .filter((pet) => {
-            const cliente = clientes.find((c) => c.id === pet.id_cliente)
-            const nomePet = pet.nome.toLowerCase()
-            const nomeCliente = cliente?.nome.toLowerCase() ?? ''
-      return nomePet.includes(termoBusca) || nomeCliente.includes(termoBusca)
-    })
-    .map((pet) => {
-      const cliente = clientes.find((c) => c.id === pet.id_cliente)
-      return { ...pet, nome_cliente: cliente?.nome ?? '(tutor não encontrado)' }
-    })
+  const resultado = await pool.query<PetComTutor>(
+    `SELECT pets.*, clientes.nome AS nome_cliente
+     FROM pets
+     JOIN clientes ON clientes.id = pets.id_cliente
+     WHERE pets.nome ILIKE $1 OR clientes.nome ILIKE $1
+     ORDER BY pets.nome`,
+    [`%${termoBusca}%`]
+  )
+  return resultado.rows
 }
 
 // Aba de Consultas
+
 export async function listarConsultasPorPet(idPet: number): Promise<Consulta[]> {
-    return consultas.filter((c) => c.id_pet === idPet)
+  const resultado = await pool.query<Consulta>(
+    'SELECT * FROM consultas WHERE id_pet = $1 ORDER BY data DESC, hora DESC',
+    [idPet]
+  )
+  return resultado.rows
 }
 
 export async function criarConsulta(dados: NovaConsulta): Promise<Consulta> {
-    const petExiste = pets.some((p) => p.id === dados.id_pet)
-    if (!petExiste) {
-        throw new Error("Pet informado não existe")
-    }
-    const consulta: Consulta = { id: proximoIdConsulta++, ...dados }
-    consultas.push(consulta)
-    return consulta
+  const petExiste = await pool.query('SELECT id FROM pets WHERE id = $1', [dados.id_pet])
+  if (petExiste.rowCount === 0) {
+    throw new Error('Pet informado não existe.')
+  }
+  const resultado = await pool.query<Consulta>(
+    `INSERT INTO consultas (id_pet, data, hora, descricao_sintomas, valor)
+     VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+    [dados.id_pet, dados.data, dados.hora, dados.descricao_sintomas, dados.valor]
+  )
+  return resultado.rows[0]
 }
 
 export async function atualizarConsulta(id: number, dados: NovaConsulta): Promise<Consulta> {
-    const indice = consultas.findIndex((c) => c.id === id)
-    if (indice === -1) {
-        throw new Error(`Consulta ${id} não encontrada`)
-    }
-    consultas[indice] = { id, ...dados}
-    return consultas[indice]
+  const resultado = await pool.query<Consulta>(
+    `UPDATE consultas SET id_pet = $1, data = $2, hora = $3, descricao_sintomas = $4, valor = $5
+     WHERE id = $6 RETURNING *`,
+    [dados.id_pet, dados.data, dados.hora, dados.descricao_sintomas, dados.valor, id]
+  )
+  if (resultado.rows.length === 0) {
+    throw new Error(`Consulta ${id} não encontrada.`)
+  }
+  return resultado.rows[0]
 }
 
 export async function excluirConsulta(id: number): Promise<void> {
-    consultas = consultas.filter((c) => c.id !== id)
+  await pool.query('DELETE FROM consultas WHERE id = $1', [id])
 }

@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions } from 'electron'
 import path from 'path'
 import * as db from './db'
-import { fecharConexao } from './conexao'
+import { fecharConexao } from './connection'
 import { NovoCliente, NovoPet, NovaConsulta } from './types'
 
 let mainWindow: BrowserWindow | null = null
@@ -14,7 +14,7 @@ function createWindow() {
     minHeight: 600,
     center: true,
     title: 'PetCare - Gestão de Clínica Veterinária',
-    show: false, 
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -26,9 +26,9 @@ function createWindow() {
     mainWindow?.show()
   })
 
-  if (process.env.VITE_DEV_SERVER_URL) {
+ if (process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL)
-    mainWindow.webContents.openDevTools({ mode: 'left' })
+    mainWindow.webContents.openDevTools({ mode: 'detach' })
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
   }
