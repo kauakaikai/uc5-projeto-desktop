@@ -1,5 +1,8 @@
 import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions } from 'electron'
 import path from 'path'
+import * as db from './db'
+import { fecharConexao } from './conexao'
+import { NovoCliente, NovoPet, NovaConsulta } from './types'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -10,8 +13,8 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     center: true,
-    title: 'PetCare - Clinica Veterinaria',
-    show: false,
+    title: 'PetCare - Gestão de Clínica Veterinária',
+    show: false, 
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -23,10 +26,9 @@ function createWindow() {
     mainWindow?.show()
   })
 
-
   if (process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL)
-    mainWindow.webContents.openDevTools({ mode: 'right' })
+    mainWindow.webContents.openDevTools({ mode: 'left' })
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
   }
@@ -44,15 +46,15 @@ function createMenu() {
             mainWindow?.webContents.send('menu-novo-cadastro')
           },
         },
-        {type: 'separator'},
-        {label: 'Sair', role: 'quit'},
+        { type: 'separator' },
+        { label: 'Sair', role: 'quit' },
       ],
     },
     {
       label: 'Exibir',
       submenu: [
         { label: 'Recarregar', role: 'reload' },
-        { label: 'Console (DevTools)', role: 'toggleDevTools'},
+        { label: 'Console (DevTools)', role: 'toggleDevTools' },
       ],
     },
   ]
@@ -78,11 +80,130 @@ app.on('window-all-closed', () => {
   }
 })
 
-app.on('before-quit', () => {
-  console.log('PetCare vai encerrar agora.')
+app.on('before-quit', async () => {
+  console.log('PetCare vai encerrar agora. Fechando conexão com o banco...')
+  await fecharConexao()
 })
 
-// Manipulador IPC Exemplo
-ipcMain.handle('canal-ping', async () => {
-  return 'pong do processo principal!'
+// Aba de Clientes
+
+ipcMain.handle('clientes:listar', async () => {
+  try {
+    return await db.listarClientes()
+  } catch (erro) {
+    console.error('[IPC clientes:listar]', erro)
+    throw new Error('Não foi possível carregar os clientes.')
+  }
+})
+
+ipcMain.handle('clientes:criar', async (_evento, dados: NovoCliente) => {
+  try {
+    return await db.criarCliente(dados)
+  } catch (erro) {
+    console.error('[IPC clientes:criar]', erro)
+    throw new Error('Não foi possível criar o cliente.')
+  }
+})
+
+ipcMain.handle('clientes:atualizar', async (_evento, id: number, dados: NovoCliente) => {
+  try {
+    return await db.atualizarCliente(id, dados)
+  } catch (erro) {
+    console.error('[IPC clientes:atualizar]', erro)
+    throw new Error('Não foi possível atualizar o cliente.')
+  }
+})
+
+ipcMain.handle('clientes:excluir', async (_evento, id: number) => {
+  try {
+    return await db.excluirCliente(id)
+  } catch (erro) {
+    console.error('[IPC clientes:excluir]', erro)
+    throw new Error(erro instanceof Error ? erro.message : 'Não foi possível excluir o cliente.')
+  }
+})
+
+// Aba de Pets
+
+ipcMain.handle('pets:listarPorCliente', async (_evento, idCliente: number) => {
+  try {
+    return await db.listarPetsPorCliente(idCliente)
+  } catch (erro) {
+    console.error('[IPC pets:listarPorCliente]', erro)
+    throw new Error('Não foi possível carregar os pets deste cliente.')
+  }
+})
+
+ipcMain.handle('pets:criar', async (_evento, dados: NovoPet) => {
+  try {
+    return await db.criarPet(dados)
+  } catch (erro) {
+    console.error('[IPC pets:criar]', erro)
+    throw new Error(erro instanceof Error ? erro.message : 'Não foi possível criar o pet.')
+  }
+})
+
+ipcMain.handle('pets:atualizar', async (_evento, id: number, dados: NovoPet) => {
+  try {
+    return await db.atualizarPet(id, dados)
+  } catch (erro) {
+    console.error('[IPC pets:atualizar]', erro)
+    throw new Error('Não foi possível atualizar o pet.')
+  }
+})
+
+ipcMain.handle('pets:excluir', async (_evento, id: number) => {
+  try {
+    return await db.excluirPet(id)
+  } catch (erro) {
+    console.error('[IPC pets:excluir]', erro)
+    throw new Error(erro instanceof Error ? erro.message : 'Não foi possível excluir o pet.')
+  }
+})
+
+ipcMain.handle('pets:buscar', async (_evento, termo: string) => {
+  try {
+    return await db.buscarPets(termo)
+  } catch (erro) {
+    console.error('[IPC pets:buscar]', erro)
+    throw new Error('Não foi possível realizar a busca.')
+  }
+})
+
+// Aba de Consultas
+
+ipcMain.handle('consultas:listarPorPet', async (_evento, idPet: number) => {
+  try {
+    return await db.listarConsultasPorPet(idPet)
+  } catch (erro) {
+    console.error('[IPC consultas:listarPorPet]', erro)
+    throw new Error('Não foi possível carregar as consultas deste pet.')
+  }
+})
+
+ipcMain.handle('consultas:criar', async (_evento, dados: NovaConsulta) => {
+  try {
+    return await db.criarConsulta(dados)
+  } catch (erro) {
+    console.error('[IPC consultas:criar]', erro)
+    throw new Error(erro instanceof Error ? erro.message : 'Não foi possível criar a consulta.')
+  }
+})
+
+ipcMain.handle('consultas:atualizar', async (_evento, id: number, dados: NovaConsulta) => {
+  try {
+    return await db.atualizarConsulta(id, dados)
+  } catch (erro) {
+    console.error('[IPC consultas:atualizar]', erro)
+    throw new Error('Não foi possível atualizar a consulta.')
+  }
+})
+
+ipcMain.handle('consultas:excluir', async (_evento, id: number) => {
+  try {
+    return await db.excluirConsulta(id)
+  } catch (erro) {
+    console.error('[IPC consultas:excluir]', erro)
+    throw new Error('Não foi possível excluir a consulta.')
+  }
 })
