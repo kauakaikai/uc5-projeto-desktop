@@ -5,6 +5,13 @@ import { fecharConexao } from './connection'
 import { NovoCliente, NovoPet, NovaConsulta } from './types'
 
 let mainWindow: BrowserWindow | null = null
+let simularFalhaConexao = false
+
+function verificarSimulacaoDeFalha() {
+  if (simularFalhaConexao) {
+    throw new Error('Falha de conexão com o banco de dados (simulação ativada no menu Exibir).')
+  }
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -14,7 +21,7 @@ function createWindow() {
     minHeight: 600,
     center: true,
     title: 'PetCare - Gestão de Clínica Veterinária',
-    show: false,
+    show: false, 
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -26,7 +33,7 @@ function createWindow() {
     mainWindow?.show()
   })
 
- if (process.env.VITE_DEV_SERVER_URL) {
+  if (process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL)
     mainWindow.webContents.openDevTools({ mode: 'right' })
   } else {
@@ -55,6 +62,22 @@ function createMenu() {
       submenu: [
         { label: 'Recarregar', role: 'reload' },
         { label: 'Console (DevTools)', role: 'toggleDevTools' },
+      ],
+    },
+    {
+      label: 'Testes',
+      submenu: [
+        {
+          label: 'Simular falha de conexão com o banco',
+          type: 'checkbox',
+          checked: false,
+          click: (menuItem) => {
+            simularFalhaConexao = menuItem.checked
+            console.log(
+              `Simulação de falha de conexão: ${simularFalhaConexao ? 'ATIVADA' : 'desativada'}`
+            )
+          },
+        },
       ],
     },
   ]
@@ -89,6 +112,7 @@ app.on('before-quit', async () => {
 
 ipcMain.handle('clientes:listar', async () => {
   try {
+    verificarSimulacaoDeFalha()
     return await db.listarClientes()
   } catch (erro) {
     console.error('[IPC clientes:listar]', erro)
@@ -98,6 +122,7 @@ ipcMain.handle('clientes:listar', async () => {
 
 ipcMain.handle('clientes:criar', async (_evento, dados: NovoCliente) => {
   try {
+    verificarSimulacaoDeFalha()
     return await db.criarCliente(dados)
   } catch (erro) {
     console.error('[IPC clientes:criar]', erro)
@@ -107,6 +132,7 @@ ipcMain.handle('clientes:criar', async (_evento, dados: NovoCliente) => {
 
 ipcMain.handle('clientes:atualizar', async (_evento, id: number, dados: NovoCliente) => {
   try {
+    verificarSimulacaoDeFalha()
     return await db.atualizarCliente(id, dados)
   } catch (erro) {
     console.error('[IPC clientes:atualizar]', erro)
@@ -116,6 +142,7 @@ ipcMain.handle('clientes:atualizar', async (_evento, id: number, dados: NovoClie
 
 ipcMain.handle('clientes:excluir', async (_evento, id: number) => {
   try {
+    verificarSimulacaoDeFalha()
     return await db.excluirCliente(id)
   } catch (erro) {
     console.error('[IPC clientes:excluir]', erro)
@@ -127,6 +154,7 @@ ipcMain.handle('clientes:excluir', async (_evento, id: number) => {
 
 ipcMain.handle('pets:listarPorCliente', async (_evento, idCliente: number) => {
   try {
+    verificarSimulacaoDeFalha()
     return await db.listarPetsPorCliente(idCliente)
   } catch (erro) {
     console.error('[IPC pets:listarPorCliente]', erro)
@@ -136,6 +164,7 @@ ipcMain.handle('pets:listarPorCliente', async (_evento, idCliente: number) => {
 
 ipcMain.handle('pets:criar', async (_evento, dados: NovoPet) => {
   try {
+    verificarSimulacaoDeFalha()
     return await db.criarPet(dados)
   } catch (erro) {
     console.error('[IPC pets:criar]', erro)
@@ -145,6 +174,7 @@ ipcMain.handle('pets:criar', async (_evento, dados: NovoPet) => {
 
 ipcMain.handle('pets:atualizar', async (_evento, id: number, dados: NovoPet) => {
   try {
+    verificarSimulacaoDeFalha()
     return await db.atualizarPet(id, dados)
   } catch (erro) {
     console.error('[IPC pets:atualizar]', erro)
@@ -154,6 +184,7 @@ ipcMain.handle('pets:atualizar', async (_evento, id: number, dados: NovoPet) => 
 
 ipcMain.handle('pets:excluir', async (_evento, id: number) => {
   try {
+    verificarSimulacaoDeFalha()
     return await db.excluirPet(id)
   } catch (erro) {
     console.error('[IPC pets:excluir]', erro)
@@ -163,6 +194,7 @@ ipcMain.handle('pets:excluir', async (_evento, id: number) => {
 
 ipcMain.handle('pets:buscar', async (_evento, termo: string) => {
   try {
+    verificarSimulacaoDeFalha()
     return await db.buscarPets(termo)
   } catch (erro) {
     console.error('[IPC pets:buscar]', erro)
@@ -174,6 +206,7 @@ ipcMain.handle('pets:buscar', async (_evento, termo: string) => {
 
 ipcMain.handle('consultas:listarPorPet', async (_evento, idPet: number) => {
   try {
+    verificarSimulacaoDeFalha()
     return await db.listarConsultasPorPet(idPet)
   } catch (erro) {
     console.error('[IPC consultas:listarPorPet]', erro)
@@ -183,6 +216,7 @@ ipcMain.handle('consultas:listarPorPet', async (_evento, idPet: number) => {
 
 ipcMain.handle('consultas:criar', async (_evento, dados: NovaConsulta) => {
   try {
+    verificarSimulacaoDeFalha()
     return await db.criarConsulta(dados)
   } catch (erro) {
     console.error('[IPC consultas:criar]', erro)
@@ -192,6 +226,7 @@ ipcMain.handle('consultas:criar', async (_evento, dados: NovaConsulta) => {
 
 ipcMain.handle('consultas:atualizar', async (_evento, id: number, dados: NovaConsulta) => {
   try {
+    verificarSimulacaoDeFalha()
     return await db.atualizarConsulta(id, dados)
   } catch (erro) {
     console.error('[IPC consultas:atualizar]', erro)
@@ -201,6 +236,7 @@ ipcMain.handle('consultas:atualizar', async (_evento, id: number, dados: NovaCon
 
 ipcMain.handle('consultas:excluir', async (_evento, id: number) => {
   try {
+    verificarSimulacaoDeFalha()
     return await db.excluirConsulta(id)
   } catch (erro) {
     console.error('[IPC consultas:excluir]', erro)

@@ -102,6 +102,9 @@ export async function listarConsultasPorPet(idPet: number): Promise<Consulta[]> 
 }
 
 export async function criarConsulta(dados: NovaConsulta): Promise<Consulta> {
+  if (dados.valor < 0) {
+    throw new Error('O valor da consulta não pode ser negativo.')
+  }
   const petExiste = await pool.query('SELECT id FROM pets WHERE id = $1', [dados.id_pet])
   if (petExiste.rowCount === 0) {
     throw new Error('Pet informado não existe.')
@@ -115,6 +118,9 @@ export async function criarConsulta(dados: NovaConsulta): Promise<Consulta> {
 }
 
 export async function atualizarConsulta(id: number, dados: NovaConsulta): Promise<Consulta> {
+  if (dados.valor < 0) {
+    throw new Error('O valor da consulta não pode ser negativo.')
+  }
   const resultado = await pool.query<Consulta>(
     `UPDATE consultas SET id_pet = $1, data = $2, hora = $3, descricao_sintomas = $4, valor = $5
      WHERE id = $6 RETURNING *`,

@@ -171,6 +171,12 @@ async function salvarCliente(evento: SubmitEvent) {
     email: (document.getElementById('cliente-email') as HTMLInputElement).value,
   }
 
+  const botaoSalvar = (evento.target as HTMLFormElement).querySelector(
+    'button[type="submit"]'
+  ) as HTMLButtonElement
+  botaoSalvar.disabled = true
+  botaoSalvar.textContent = 'Salvando...'
+
   try {
     if (clienteEmEdicao) {
       await window.api.clientes.atualizar(clienteEmEdicao.id, dados)
@@ -184,6 +190,8 @@ async function salvarCliente(evento: SubmitEvent) {
   } catch (erro) {
     definirStatus(erro instanceof Error ? erro.message : 'Erro ao salvar cliente.', true)
     console.error(erro)
+    botaoSalvar.disabled = false
+    botaoSalvar.textContent = clienteEmEdicao ? 'Salvar alterações' : 'Cadastrar'
   }
 }
 
@@ -327,6 +335,12 @@ async function salvarPet(evento: SubmitEvent) {
     id_cliente: clienteSelecionadoId,
   }
 
+  const botaoSalvar = (evento.target as HTMLFormElement).querySelector(
+    'button[type="submit"]'
+  ) as HTMLButtonElement
+  botaoSalvar.disabled = true
+  botaoSalvar.textContent = 'Salvando...'
+
   try {
     if (petEmEdicao) {
       await window.api.pets.atualizar(petEmEdicao.id, dados)
@@ -340,6 +354,8 @@ async function salvarPet(evento: SubmitEvent) {
   } catch (erro) {
     definirStatus(erro instanceof Error ? erro.message : 'Erro ao salvar pet.', true)
     console.error(erro)
+    botaoSalvar.disabled = false
+    botaoSalvar.textContent = petEmEdicao ? 'Salvar alterações' : 'Cadastrar pet'
   }
 }
 
@@ -526,6 +542,17 @@ async function salvarConsulta(evento: SubmitEvent) {
     valor: Number((document.getElementById('consulta-valor') as HTMLInputElement).value),
   }
 
+  if (Number.isNaN(dados.valor) || dados.valor < 0) {
+    definirStatus('O valor da consulta precisa ser um número maior ou igual a zero.', true)
+    return
+  }
+
+  const botaoSalvar = (evento.target as HTMLFormElement).querySelector(
+    'button[type="submit"]'
+  ) as HTMLButtonElement
+  botaoSalvar.disabled = true
+  botaoSalvar.textContent = 'Salvando...'
+
   try {
     if (consultaEmEdicao) {
       await window.api.consultas.atualizar(consultaEmEdicao.id, dados)
@@ -539,6 +566,8 @@ async function salvarConsulta(evento: SubmitEvent) {
   } catch (erro) {
     definirStatus(erro instanceof Error ? erro.message : 'Erro ao salvar consulta.', true)
     console.error(erro)
+    botaoSalvar.disabled = false
+    botaoSalvar.textContent = consultaEmEdicao ? 'Salvar alterações' : 'Registrar consulta'
   }
 }
 
