@@ -149,6 +149,11 @@ button:hover {
   text-align: left;
   padding: 10px;
   border-bottom: 1px solid #334155;
+  white-space: nowrap;
+}
+
+.tabela td:nth-child(3) {
+  white-space: normal; /* sintomas/descrição pode ter texto longo, esse aqui pode quebrar linha */
 }
 
 .tabela th {
@@ -159,9 +164,12 @@ button:hover {
 }
 
 .tabela td button {
-  padding: 6px 12px;
+  padding: 6px 14px;
   font-size: 13px;
-  margin-right: 4px;
+}
+
+.tabela td button + button {
+  margin-left: 10px;
 }
 
 .status {

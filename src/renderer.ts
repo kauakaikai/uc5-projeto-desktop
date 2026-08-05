@@ -486,7 +486,7 @@ async function carregarConsultas() {
           <td>${consulta.data}</td>
           <td>${consulta.hora}</td>
           <td>${consulta.descricao_sintomas}</td>
-          <td>R$ ${Number(consulta.valor).toFixed(2)}</td>
+          <td>R$&nbsp;${Number(consulta.valor).toFixed(2)}</td>
           <td>
             <button data-editar="${consulta.id}">Editar</button>
             <button data-excluir="${consulta.id}" class="botao-perigo">Excluir</button>

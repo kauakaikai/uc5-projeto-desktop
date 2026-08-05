@@ -1,11 +1,13 @@
-import { Pool } from 'pg'
+import { Pool, types } from 'pg'
 import dotenv from 'dotenv'
 
 dotenv.config()
 
+types.setTypeParser(1082, (valor) => valor)
+
 if (!process.env.DATABASE_URL) {
   throw new Error(
-    'DATABASE_URL não definida. Copie .env.example para .env e preencha com a string de conexão do seu banco.'
+    'DATABASE_URL não definida. copie a string de conexão do seu banco para .env.'
   )
 }
 
