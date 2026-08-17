@@ -78,7 +78,9 @@ export async function excluirPet(id: number): Promise<void> {
 
 export async function buscarPets(termo: string): Promise<PetComTutor[]> {
   const termoBusca = termo.trim()
-  if (!termoBusca) return []
+  if (termoBusca.length < 2) {
+    throw new Error('Digite pelo menos 2 caracteres para buscar.')
+  }
 
   const resultado = await pool.query<PetComTutor>(
     `SELECT pets.*, clientes.nome AS nome_cliente
