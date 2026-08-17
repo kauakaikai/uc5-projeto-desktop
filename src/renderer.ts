@@ -36,24 +36,7 @@ let clienteEmEdicao: Cliente | null = null
 let petEmEdicao: Pet | null = null
 let consultaEmEdicao: Consulta | null = null
 
-const appElement = document.getElementById('app') as HTMLDivElement
-
-function montarLayout() {
-  appElement.innerHTML = `
-    <header class="cabecalho">
-      <h1>🐾 PetCare</h1>
-      <p>Gestão de Clínica Veterinária</p>
-    </header>
-    <nav id="nav" class="nav">
-      <button data-aba="clientes">Clientes</button>
-      <button data-aba="pets">Pets</button>
-      <button data-aba="consultas">Consultas</button>
-      <button data-aba="busca">Busca</button>
-    </nav>
-    <main id="conteudo" class="conteudo"></main>
-    <p id="status" class="status"></p>
-  `
-
+function iniciarNavegacao() {
   document.querySelectorAll<HTMLButtonElement>('#nav button').forEach((botao) => {
     botao.addEventListener('click', () => {
       abaAtual = botao.dataset.aba as Aba
@@ -73,16 +56,19 @@ function renderizarAba() {
     botao.classList.toggle('ativo', botao.dataset.aba === abaAtual)
   })
 
+  document.querySelectorAll<HTMLElement>('.secao-aba').forEach((secao) => {
+    secao.style.display = secao.id === `secao-${abaAtual}` ? 'block' : 'none'
+  })
+
   if (abaAtual === 'clientes') renderClientes()
   if (abaAtual === 'pets') renderPets()
   if (abaAtual === 'consultas') renderConsultas()
-  if (abaAtual === 'busca') renderBusca()
 }
 
 // Aba de Clientes
 
 async function renderClientes() {
-  const conteudo = document.getElementById('conteudo') as HTMLElement
+  const conteudo = document.getElementById('secao-clientes') as HTMLElement
   conteudo.innerHTML = `
     <section class="painel">
       <h2>${clienteEmEdicao ? 'Editar cliente' : 'Novo cliente'}</h2>
@@ -209,7 +195,7 @@ async function excluirCliente(id: number) {
 // Aba de Pets
 
 async function renderPets() {
-  const conteudo = document.getElementById('conteudo') as HTMLElement
+  const conteudo = document.getElementById('secao-pets') as HTMLElement
   conteudo.innerHTML = `
     <section class="painel">
       <h2>Selecione o tutor</h2>
@@ -373,7 +359,7 @@ async function excluirPet(id: number) {
 // Aba de Consultas
 
 async function renderConsultas() {
-  const conteudo = document.getElementById('conteudo') as HTMLElement
+  const conteudo = document.getElementById('secao-consultas') as HTMLElement
   conteudo.innerHTML = `
     <section class="painel">
       <h2>Selecione o tutor e o pet</h2>
@@ -582,54 +568,65 @@ async function excluirConsulta(id: number) {
   }
 }
 
-// Aba de Buscas
+// Aba de Busca
 
-function renderBusca() {
-  const conteudo = document.getElementById('conteudo') as HTMLElement
-  conteudo.innerHTML = `
-    <section class="painel">
-      <h2>Buscar pet por nome do pet ou do tutor</h2>
-      <form id="form-busca" class="formulario formulario-linha">
-        <input type="text" id="busca-termo" placeholder="Ex: Rex, ou o nome do tutor" required />
-        <button type="submit">Buscar</button>
-      </form>
-      <table class="tabela">
-        <thead><tr><th>Pet</th><th>Espécie</th><th>Raça</th><th>Tutor</th></tr></thead>
-        <tbody id="lista-busca"></tbody>
-      </table>
-    </section>
-  `
-
+function configurarBusca() {
   const form = document.getElementById('form-busca') as HTMLFormElement
+  const campoTermo = document.getElementById('busca-termo') as HTMLInputElement
+  const erroBusca = document.getElementById('erro-busca') as HTMLParagraphElement
+  const statusBusca = document.getElementById('status-busca') as HTMLParagraphElement
+  const listaResultados = document.getElementById('lista-resultados-busca') as HTMLUListElement
+  const filtroEspecie = document.getElementById('filtro-especie') as HTMLInputElement
+
   form.addEventListener('submit', async (evento) => {
     evento.preventDefault()
-    const termo = (document.getElementById('busca-termo') as HTMLInputElement).value
-    const corpoTabela = document.getElementById('lista-busca') as HTMLTableSectionElement
+
+    erroBusca.textContent = ''
+    statusBusca.textContent = ''
+    listaResultados.replaceChildren()
+    filtroEspecie.value = ''
+    filtroEspecie.disabled = true
 
     try {
-      const resultados = await window.api.pets.buscar(termo)
+      const resultados = await window.api.pets.buscar(campoTermo.value)
       if (resultados.length === 0) {
-        corpoTabela.innerHTML = '<tr><td colspan="4">Nenhum resultado encontrado.</td></tr>'
-      } else {
-        corpoTabela.innerHTML = resultados
-          .map(
-            (pet) => `
-            <tr>
-              <td>${pet.nome}</td>
-              <td>${pet.especie}</td>
-              <td>${pet.raca}</td>
-              <td>${pet.nome_cliente}</td>
-            </tr>`
-          )
-          .join('')
+        statusBusca.textContent = `Nenhum resultado encontrado para "${campoTermo.value.trim()}".`
+        return
       }
-      definirStatus(`${resultados.length} resultado(s) encontrado(s).`)
+
+      resultados.forEach((pet) => {
+        const item = document.createElement('li')
+        item.dataset.especie = pet.especie.toLowerCase()
+
+        const nome = document.createElement('strong')
+        nome.textContent = pet.nome
+
+        const detalhes = document.createElement('span')
+        detalhes.textContent = ` ${pet.especie}, ${pet.raca} — tutor: ${pet.nome_cliente}`
+
+        item.appendChild(nome)
+        item.appendChild(detalhes)
+        listaResultados.appendChild(item)
+      })
+
+      filtroEspecie.disabled = false
+      statusBusca.textContent = `${resultados.length} resultado(s) encontrado(s).`
     } catch (erro) {
-      definirStatus('Não foi possível realizar a busca.', true)
+      erroBusca.textContent =
+        erro instanceof Error ? erro.message : 'Não foi possível realizar a busca.'
       console.error(erro)
     }
   })
+
+  filtroEspecie.addEventListener('input', () => {
+    const termoFiltro = filtroEspecie.value.trim().toLowerCase()
+    listaResultados.querySelectorAll<HTMLLIElement>('li').forEach((item) => {
+      const especieDoItem = item.dataset.especie ?? ''
+      item.style.display = especieDoItem.includes(termoFiltro) ? '' : 'none'
+    })
+  })
 }
 
-montarLayout()
+iniciarNavegacao()
+configurarBusca()
 renderizarAba()
