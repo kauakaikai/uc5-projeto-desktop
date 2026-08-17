@@ -9,7 +9,7 @@ let simularFalhaConexao = false
 
 function verificarSimulacaoDeFalha() {
   if (simularFalhaConexao) {
-    throw new Error('Falha de conexão com o banco de dados (simulação ativada no menu Exibir).')
+    throw new Error('Falha de conexao com o banco de dados (simulacao ativada no menu Exibir).')
   }
 }
 
@@ -104,7 +104,7 @@ app.on('window-all-closed', () => {
 })
 
 app.on('before-quit', async () => {
-  console.log('PetCare vai encerrar agora. Fechando conexão com o banco...')
+  console.log('PetCare vai encerrar agora. Fechando conexao com o banco...')
   await fecharConexao()
 })
 
@@ -116,7 +116,7 @@ ipcMain.handle('clientes:listar', async () => {
     return await db.listarClientes()
   } catch (erro) {
     console.error('[IPC clientes:listar]', erro)
-    throw new Error('Não foi possível carregar os clientes.')
+    throw new Error('Nao foi possível carregar os clientes.')
   }
 })
 
@@ -126,7 +126,7 @@ ipcMain.handle('clientes:criar', async (_evento, dados: NovoCliente) => {
     return await db.criarCliente(dados)
   } catch (erro) {
     console.error('[IPC clientes:criar]', erro)
-    throw new Error('Não foi possível criar o cliente.')
+    throw new Error('Nao foi possível criar o cliente.')
   }
 })
 
@@ -136,7 +136,7 @@ ipcMain.handle('clientes:atualizar', async (_evento, id: number, dados: NovoClie
     return await db.atualizarCliente(id, dados)
   } catch (erro) {
     console.error('[IPC clientes:atualizar]', erro)
-    throw new Error('Não foi possível atualizar o cliente.')
+    throw new Error('Nao foi possível atualizar o cliente.')
   }
 })
 
@@ -146,7 +146,7 @@ ipcMain.handle('clientes:excluir', async (_evento, id: number) => {
     return await db.excluirCliente(id)
   } catch (erro) {
     console.error('[IPC clientes:excluir]', erro)
-    throw new Error(erro instanceof Error ? erro.message : 'Não foi possível excluir o cliente.')
+    throw new Error(erro instanceof Error ? erro.message : 'Nao foi possível excluir o cliente.')
   }
 })
 
@@ -158,7 +158,7 @@ ipcMain.handle('pets:listarPorCliente', async (_evento, idCliente: number) => {
     return await db.listarPetsPorCliente(idCliente)
   } catch (erro) {
     console.error('[IPC pets:listarPorCliente]', erro)
-    throw new Error('Não foi possível carregar os pets deste cliente.')
+    throw new Error('Nao foi possível carregar os pets deste cliente.')
   }
 })
 
@@ -168,7 +168,7 @@ ipcMain.handle('pets:criar', async (_evento, dados: NovoPet) => {
     return await db.criarPet(dados)
   } catch (erro) {
     console.error('[IPC pets:criar]', erro)
-    throw new Error(erro instanceof Error ? erro.message : 'Não foi possível criar o pet.')
+    throw new Error(erro instanceof Error ? erro.message : 'Nao foi possível criar o pet.')
   }
 })
 
@@ -178,7 +178,7 @@ ipcMain.handle('pets:atualizar', async (_evento, id: number, dados: NovoPet) => 
     return await db.atualizarPet(id, dados)
   } catch (erro) {
     console.error('[IPC pets:atualizar]', erro)
-    throw new Error('Não foi possível atualizar o pet.')
+    throw new Error('Nao foi possível atualizar o pet.')
   }
 })
 
@@ -188,7 +188,7 @@ ipcMain.handle('pets:excluir', async (_evento, id: number) => {
     return await db.excluirPet(id)
   } catch (erro) {
     console.error('[IPC pets:excluir]', erro)
-    throw new Error(erro instanceof Error ? erro.message : 'Não foi possível excluir o pet.')
+    throw new Error(erro instanceof Error ? erro.message : 'Nao foi possível excluir o pet.')
   }
 })
 
@@ -198,7 +198,7 @@ ipcMain.handle('pets:buscar', async (_evento, termo: string) => {
     return await db.buscarPets(termo)
   } catch (erro) {
     console.error('[IPC pets:buscar]', erro)
-    throw new Error('Não foi possível realizar a busca.')
+    throw new Error('Nao foi possível realizar a busca.')
   }
 })
 
@@ -210,7 +210,7 @@ ipcMain.handle('consultas:listarPorPet', async (_evento, idPet: number) => {
     return await db.listarConsultasPorPet(idPet)
   } catch (erro) {
     console.error('[IPC consultas:listarPorPet]', erro)
-    throw new Error('Não foi possível carregar as consultas deste pet.')
+    throw new Error('Nao foi possível carregar as consultas deste pet.')
   }
 })
 
@@ -220,7 +220,7 @@ ipcMain.handle('consultas:criar', async (_evento, dados: NovaConsulta) => {
     return await db.criarConsulta(dados)
   } catch (erro) {
     console.error('[IPC consultas:criar]', erro)
-    throw new Error(erro instanceof Error ? erro.message : 'Não foi possível criar a consulta.')
+    throw new Error(erro instanceof Error ? erro.message : 'Nao foi possível criar a consulta.')
   }
 })
 
@@ -230,7 +230,7 @@ ipcMain.handle('consultas:atualizar', async (_evento, id: number, dados: NovaCon
     return await db.atualizarConsulta(id, dados)
   } catch (erro) {
     console.error('[IPC consultas:atualizar]', erro)
-    throw new Error('Não foi possível atualizar a consulta.')
+    throw new Error('Nao foi possível atualizar a consulta.')
   }
 })
 
@@ -240,6 +240,6 @@ ipcMain.handle('consultas:excluir', async (_evento, id: number) => {
     return await db.excluirConsulta(id)
   } catch (erro) {
     console.error('[IPC consultas:excluir]', erro)
-    throw new Error('Não foi possível excluir a consulta.')
+    throw new Error('Nao foi possível excluir a consulta.')
   }
 })
