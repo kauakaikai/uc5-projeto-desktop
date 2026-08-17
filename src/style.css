@@ -153,7 +153,7 @@ button:hover {
 }
 
 .tabela td:nth-child(3) {
-  white-space: normal; /* sintomas/descrição pode ter texto longo, esse aqui pode quebrar linha */
+  white-space: normal;
 }
 
 .tabela th {
@@ -181,6 +181,39 @@ button:hover {
 .status-erro {
   color: #f87171;
   font-weight: bold;
+}
+
+.filtro-cliente {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 16px 0;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+}
+
+.lista-busca {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lista-busca li {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+.lista-busca li strong {
+  color: #f8fafc;
+}
+
+.lista-busca li span {
+  color: #94a3b8;
 }
 
 /* Responsividade básica */
