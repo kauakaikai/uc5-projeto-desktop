@@ -153,7 +153,7 @@ button:hover {
 }
 
 .tabela td:nth-child(3) {
-  white-space: normal;
+  white-space: normal; 
 }
 
 .tabela th {
@@ -178,9 +178,35 @@ button:hover {
   min-height: 20px;
 }
 
+#status {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  max-width: 90vw;
+  margin: 0;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background: #1e293b;
+  border-left: 4px solid #3b82f6;
+  color: #f8fafc;
+  font-weight: 600;
+  box-shadow: 0 8px 16px -4px rgb(0 0 0 / 0.4);
+}
+
+#status:empty {
+  display: none;
+}
+
 .status-erro {
   color: #f87171;
   font-weight: bold;
+}
+
+#status.status-erro {
+  border-left-color: #f87171;
+  color: #fecaca;
 }
 
 .filtro-cliente {
@@ -216,8 +242,7 @@ button:hover {
   color: #94a3b8;
 }
 
-/* Responsividade básica */
-@media (max-width: 600px) {
+@media (max-width: 850px) {
   body {
     padding: 10px;
   }
