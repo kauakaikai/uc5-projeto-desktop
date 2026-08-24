@@ -5,6 +5,8 @@ dotenv.config()
 
 types.setTypeParser(1082, (valor) => valor)
 
+types.setTypeParser(1700, (valor) => parseFloat(valor))
+
 if (!process.env.DATABASE_URL) {
   throw new Error(
     'DATABASE_URL não definida. copie a string de conexão do seu banco para .env.'
