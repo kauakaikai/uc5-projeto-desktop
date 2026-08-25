@@ -51,6 +51,13 @@ function definirStatus(mensagem: string, erro = false) {
   status.classList.toggle('status-erro', erro)
 }
 
+function mensagemDeErro(erro: unknown, mensagemPadrao: string): string {
+  if (!(erro instanceof Error)) return mensagemPadrao
+  const partes = erro.message.split('Error: ')
+  const mensagemLimpa = partes[partes.length - 1].trim()
+  return mensagemLimpa || mensagemPadrao
+}
+
 function renderizarAba() {
   document.querySelectorAll<HTMLButtonElement>('#nav button').forEach((botao) => {
     botao.classList.toggle('ativo', botao.dataset.aba === abaAtual)
@@ -174,7 +181,7 @@ async function salvarCliente(evento: SubmitEvent) {
     clienteEmEdicao = null
     renderClientes()
   } catch (erro) {
-    definirStatus(erro instanceof Error ? erro.message : 'Erro ao salvar cliente.', true)
+    definirStatus(mensagemDeErro(erro, 'Erro ao salvar cliente.'), true)
     console.error(erro)
     botaoSalvar.disabled = false
     botaoSalvar.textContent = clienteEmEdicao ? 'Salvar alterações' : 'Cadastrar'
@@ -187,7 +194,7 @@ async function excluirCliente(id: number) {
     definirStatus('Cliente excluído.')
     await carregarClientes()
   } catch (erro) {
-    definirStatus(erro instanceof Error ? erro.message : 'Erro ao excluir cliente.', true)
+    definirStatus(mensagemDeErro(erro, 'Erro ao excluir cliente.'), true)
     console.error(erro)
   }
 }
@@ -338,7 +345,7 @@ async function salvarPet(evento: SubmitEvent) {
     petEmEdicao = null
     renderPets()
   } catch (erro) {
-    definirStatus(erro instanceof Error ? erro.message : 'Erro ao salvar pet.', true)
+    definirStatus(mensagemDeErro(erro, 'Erro ao salvar pet.'), true)
     console.error(erro)
     botaoSalvar.disabled = false
     botaoSalvar.textContent = petEmEdicao ? 'Salvar alterações' : 'Cadastrar pet'
@@ -351,7 +358,7 @@ async function excluirPet(id: number) {
     definirStatus('Pet excluído.')
     await carregarPets()
   } catch (erro) {
-    definirStatus(erro instanceof Error ? erro.message : 'Erro ao excluir pet.', true)
+    definirStatus(mensagemDeErro(erro, 'Erro ao excluir pet.'), true)
     console.error(erro)
   }
 }
@@ -550,7 +557,7 @@ async function salvarConsulta(evento: SubmitEvent) {
     consultaEmEdicao = null
     renderConsultas()
   } catch (erro) {
-    definirStatus(erro instanceof Error ? erro.message : 'Erro ao salvar consulta.', true)
+    definirStatus(mensagemDeErro(erro, 'Erro ao salvar consulta.'), true)
     console.error(erro)
     botaoSalvar.disabled = false
     botaoSalvar.textContent = consultaEmEdicao ? 'Salvar alterações' : 'Registrar consulta'
@@ -563,7 +570,7 @@ async function excluirConsulta(id: number) {
     definirStatus('Consulta excluída.')
     await carregarConsultas()
   } catch (erro) {
-    definirStatus(erro instanceof Error ? erro.message : 'Erro ao excluir consulta.', true)
+    definirStatus(mensagemDeErro(erro, 'Erro ao excluir consulta.'), true)
     console.error(erro)
   }
 }
@@ -613,7 +620,7 @@ function configurarBusca() {
       statusBusca.textContent = `${resultados.length} resultado(s) encontrado(s).`
     } catch (erro) {
       erroBusca.textContent =
-        erro instanceof Error ? erro.message : 'Não foi possível realizar a busca.'
+        mensagemDeErro(erro, 'Não foi possível realizar a busca.')
       console.error(erro)
     }
   })
