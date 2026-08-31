@@ -45,10 +45,21 @@ function iniciarNavegacao() {
   })
 }
 
+let statusTimeoutId: number | undefined
+
 function definirStatus(mensagem: string, erro = false) {
   const status = document.getElementById('status') as HTMLParagraphElement
   status.textContent = mensagem
   status.classList.toggle('status-erro', erro)
+
+  if (statusTimeoutId !== undefined) {
+    window.clearTimeout(statusTimeoutId)
+  }
+
+  statusTimeoutId = window.setTimeout(() => {
+    status.textContent = ''
+    status.classList.remove('status-erro')
+  }, 2000)
 }
 
 function mensagemDeErro(erro: unknown, mensagemPadrao: string): string {
