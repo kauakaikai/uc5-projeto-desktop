@@ -23,8 +23,9 @@
     "vite-plugin-electron-renderer": "^1.0.0"
   },
   "build": {
-    "appId": "com.example.meuapp",
-    "productName": "MeuApp",
+    "appId": "com.senac.petcare",
+    "productName": "PetCare",
+    "directories": { "output": "release" },
     "win": {
       "target": "nsis",
       "requestedExecutionLevel": "asInvoker"
