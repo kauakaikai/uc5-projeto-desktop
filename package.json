@@ -1,5 +1,5 @@
 {
-  "name": "meu-app-desktop",
+  "name": "meu-app-pet-care",
   "version": "1.0.0",
   "main": "dist-electron/main.js",
   "description": "Projeto base Electron + Vite + TypeScript com IPC seguro e empacotamento por usuário",
