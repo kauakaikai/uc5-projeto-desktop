@@ -3,9 +3,6 @@ import dotenv from 'dotenv'
 import { app } from 'electron'
 import path from 'path'
 
-// Em dev, process.cwd() é a pasta do projeto e o .env está lá.
-// No app instalado, o processo não abre mais nessa pasta - o .env
-// (empacotado dentro do app.asar) só é achado apontando pra app.getAppPath().
 const caminhoEnv = app.isPackaged
   ? path.join(app.getAppPath(), '.env')
   : path.join(process.cwd(), '.env')
