@@ -30,8 +30,8 @@ declare global {
 type Aba = 'clientes' | 'pets' | 'consultas' | 'busca'
 
 let abaAtual: Aba = 'clientes'
-let clienteSelecionadoId: number | null = null 
-let petSelecionadoId: number | null = null 
+let clienteSelecionadoId: number | null = null
+let petSelecionadoId: number | null = null
 let clienteEmEdicao: Cliente | null = null
 let petEmEdicao: Pet | null = null
 let consultaEmEdicao: Consulta | null = null
@@ -69,6 +69,13 @@ function mensagemDeErro(erro: unknown, mensagemPadrao: string): string {
   return mensagemLimpa || mensagemPadrao
 }
 
+function criarOpcao(valor: string, texto: string): HTMLOptionElement {
+  const opcao = document.createElement('option')
+  opcao.value = valor
+  opcao.textContent = texto
+  return opcao
+}
+
 function renderizarAba() {
   document.querySelectorAll<HTMLButtonElement>('#nav button').forEach((botao) => {
     botao.classList.toggle('ativo', botao.dataset.aba === abaAtual)
@@ -85,47 +92,35 @@ function renderizarAba() {
 
 // Aba de Clientes
 
-async function renderClientes() {
-  const conteudo = document.getElementById('secao-clientes') as HTMLElement
-  conteudo.innerHTML = `
-    <section class="painel">
-      <h2>${clienteEmEdicao ? 'Editar cliente' : 'Novo cliente'}</h2>
-      <form id="form-cliente" class="formulario">
-        <label>Nome
-          <input type="text" id="cliente-nome" required value="${clienteEmEdicao?.nome ?? ''}" />
-        </label>
-        <label>Telefone
-          <input type="text" id="cliente-telefone" required value="${clienteEmEdicao?.telefone ?? ''}" />
-        </label>
-        <label>Email
-          <input type="email" id="cliente-email" required value="${clienteEmEdicao?.email ?? ''}" />
-        </label>
-        <div class="acoes-formulario">
-          <button type="submit">${clienteEmEdicao ? 'Salvar alterações' : 'Cadastrar'}</button>
-          ${clienteEmEdicao ? '<button type="button" id="cancelar-edicao-cliente">Cancelar</button>' : ''}
-        </div>
-      </form>
-    </section>
-    <section class="painel">
-      <h2>Clientes cadastrados</h2>
-      <table class="tabela">
-        <thead>
-          <tr><th>Nome</th><th>Telefone</th><th>Email</th><th>Ações</th></tr>
-        </thead>
-        <tbody id="lista-clientes"></tbody>
-      </table>
-    </section>
-  `
+function atualizarFormClientes() {
+  const titulo = document.getElementById('titulo-form-cliente') as HTMLHeadingElement
+  const nome = document.getElementById('cliente-nome') as HTMLInputElement
+  const telefone = document.getElementById('cliente-telefone') as HTMLInputElement
+  const email = document.getElementById('cliente-email') as HTMLInputElement
+  const botaoSalvar = document.getElementById('botao-salvar-cliente') as HTMLButtonElement
+  const botaoCancelar = document.getElementById('cancelar-edicao-cliente') as HTMLButtonElement
 
+  titulo.textContent = clienteEmEdicao ? 'Editar cliente' : 'Novo cliente'
+  nome.value = clienteEmEdicao?.nome ?? ''
+  telefone.value = clienteEmEdicao?.telefone ?? ''
+  email.value = clienteEmEdicao?.email ?? ''
+  botaoSalvar.textContent = clienteEmEdicao ? 'Salvar alterações' : 'Cadastrar'
+  botaoCancelar.hidden = !clienteEmEdicao
+}
+
+function iniciarFormClientes() {
   const form = document.getElementById('form-cliente') as HTMLFormElement
   form.addEventListener('submit', salvarCliente)
 
-  const botaoCancelar = document.getElementById('cancelar-edicao-cliente')
-  botaoCancelar?.addEventListener('click', () => {
+  const botaoCancelar = document.getElementById('cancelar-edicao-cliente') as HTMLButtonElement
+  botaoCancelar.addEventListener('click', () => {
     clienteEmEdicao = null
-    renderClientes()
+    atualizarFormClientes()
   })
+}
 
+async function renderClientes() {
+  atualizarFormClientes()
   await carregarClientes()
 }
 
@@ -133,31 +128,41 @@ async function carregarClientes() {
   const corpoTabela = document.getElementById('lista-clientes') as HTMLTableSectionElement
   try {
     const clientes = await window.api.clientes.listar()
-    corpoTabela.innerHTML = clientes
-      .map(
-        (cliente) => `
-        <tr>
-          <td>${cliente.nome}</td>
-          <td>${cliente.telefone}</td>
-          <td>${cliente.email}</td>
-          <td>
-            <button data-editar="${cliente.id}">Editar</button>
-            <button data-excluir="${cliente.id}" class="botao-perigo">Excluir</button>
-          </td>
-        </tr>`
-      )
-      .join('')
+    corpoTabela.replaceChildren()
 
-    corpoTabela.querySelectorAll<HTMLButtonElement>('[data-editar]').forEach((botao) => {
-      botao.addEventListener('click', () => {
-        const id = Number(botao.dataset.editar)
-        clienteEmEdicao = clientes.find((c) => c.id === id) ?? null
-        renderClientes()
+    clientes.forEach((cliente) => {
+      const linha = document.createElement('tr')
+
+      const celulaNome = document.createElement('td')
+      celulaNome.textContent = cliente.nome
+
+      const celulaTelefone = document.createElement('td')
+      celulaTelefone.textContent = cliente.telefone
+
+      const celulaEmail = document.createElement('td')
+      celulaEmail.textContent = cliente.email
+
+      const celulaAcoes = document.createElement('td')
+      const botaoEditar = document.createElement('button')
+      botaoEditar.textContent = 'Editar'
+      botaoEditar.addEventListener('click', () => {
+        clienteEmEdicao = cliente
+        atualizarFormClientes()
       })
-    })
 
-    corpoTabela.querySelectorAll<HTMLButtonElement>('[data-excluir]').forEach((botao) => {
-      botao.addEventListener('click', () => excluirCliente(Number(botao.dataset.excluir)))
+      const botaoExcluir = document.createElement('button')
+      botaoExcluir.textContent = 'Excluir'
+      botaoExcluir.classList.add('botao-perigo')
+      botaoExcluir.addEventListener('click', () => excluirCliente(cliente.id))
+
+      celulaAcoes.appendChild(botaoEditar)
+      celulaAcoes.appendChild(botaoExcluir)
+
+      linha.appendChild(celulaNome)
+      linha.appendChild(celulaTelefone)
+      linha.appendChild(celulaEmail)
+      linha.appendChild(celulaAcoes)
+      corpoTabela.appendChild(linha)
     })
 
     definirStatus(`${clientes.length} cliente(s) carregado(s).`)
@@ -175,9 +180,7 @@ async function salvarCliente(evento: SubmitEvent) {
     email: (document.getElementById('cliente-email') as HTMLInputElement).value,
   }
 
-  const botaoSalvar = (evento.target as HTMLFormElement).querySelector(
-    'button[type="submit"]'
-  ) as HTMLButtonElement
+  const botaoSalvar = document.getElementById('botao-salvar-cliente') as HTMLButtonElement
   botaoSalvar.disabled = true
   botaoSalvar.textContent = 'Salvando...'
 
@@ -190,7 +193,7 @@ async function salvarCliente(evento: SubmitEvent) {
       definirStatus('Cliente cadastrado com sucesso.')
     }
     clienteEmEdicao = null
-    renderClientes()
+    await renderClientes()
   } catch (erro) {
     definirStatus(mensagemDeErro(erro, 'Erro ao salvar cliente.'), true)
     console.error(erro)
@@ -212,58 +215,62 @@ async function excluirCliente(id: number) {
 
 // Aba de Pets
 
-async function renderPets() {
-  const conteudo = document.getElementById('secao-pets') as HTMLElement
-  conteudo.innerHTML = `
-    <section class="painel">
-      <h2>Selecione o tutor</h2>
-      <select id="seletor-cliente-pets"><option value="">Carregando...</option></select>
-    </section>
-    <section class="painel" id="area-pets" style="display:none">
-      <h2 id="titulo-form-pet">${petEmEdicao ? 'Editar pet' : 'Novo pet'}</h2>
-      <form id="form-pet" class="formulario">
-        <label>Nome do pet
-          <input type="text" id="pet-nome" required value="${petEmEdicao?.nome ?? ''}" />
-        </label>
-        <label>Espécie
-          <input type="text" id="pet-especie" required placeholder="Cachorro, gato..." value="${petEmEdicao?.especie ?? ''}" />
-        </label>
-        <label>Raça
-          <input type="text" id="pet-raca" required value="${petEmEdicao?.raca ?? ''}" />
-        </label>
-        <div class="acoes-formulario">
-          <button type="submit">${petEmEdicao ? 'Salvar alterações' : 'Cadastrar pet'}</button>
-          ${petEmEdicao ? '<button type="button" id="cancelar-edicao-pet">Cancelar</button>' : ''}
-        </div>
-      </form>
-      <h2>Pets deste tutor</h2>
-      <table class="tabela">
-        <thead><tr><th>Nome</th><th>Espécie</th><th>Raça</th><th>Ações</th></tr></thead>
-        <tbody id="lista-pets"></tbody>
-      </table>
-    </section>
-  `
+function atualizarFormPets() {
+  const titulo = document.getElementById('titulo-form-pet') as HTMLHeadingElement
+  const nome = document.getElementById('pet-nome') as HTMLInputElement
+  const especie = document.getElementById('pet-especie') as HTMLInputElement
+  const raca = document.getElementById('pet-raca') as HTMLInputElement
+  const botaoSalvar = document.getElementById('botao-salvar-pet') as HTMLButtonElement
+  const botaoCancelar = document.getElementById('cancelar-edicao-pet') as HTMLButtonElement
 
+  titulo.textContent = petEmEdicao ? 'Editar pet' : 'Novo pet'
+  nome.value = petEmEdicao?.nome ?? ''
+  especie.value = petEmEdicao?.especie ?? ''
+  raca.value = petEmEdicao?.raca ?? ''
+  botaoSalvar.textContent = petEmEdicao ? 'Salvar alterações' : 'Cadastrar pet'
+  botaoCancelar.hidden = !petEmEdicao
+}
+
+function iniciarFormPets() {
+  const form = document.getElementById('form-pet') as HTMLFormElement
+  form.addEventListener('submit', salvarPet)
+
+  const botaoCancelar = document.getElementById('cancelar-edicao-pet') as HTMLButtonElement
+  botaoCancelar.addEventListener('click', () => {
+    petEmEdicao = null
+    atualizarFormPets()
+  })
+}
+
+function iniciarSeletorPets() {
+  const seletor = document.getElementById('seletor-cliente-pets') as HTMLSelectElement
+  seletor.addEventListener('change', () => {
+    clienteSelecionadoId = seletor.value ? Number(seletor.value) : null
+    petEmEdicao = null
+    alternarAreaPets()
+  })
+}
+
+async function renderPets() {
   const seletor = document.getElementById('seletor-cliente-pets') as HTMLSelectElement
   try {
     const clientes = await window.api.clientes.listar()
+    seletor.replaceChildren()
+
     if (clientes.length === 0) {
-      seletor.innerHTML = '<option value="">Cadastre um cliente primeiro</option>'
+      seletor.appendChild(criarOpcao('', 'Cadastre um cliente primeiro'))
+      alternarAreaPets()
       return
     }
-    seletor.innerHTML =
-      '<option value="">Selecione...</option>' +
-      clientes.map((c) => `<option value="${c.id}">${c.nome}</option>`).join('')
+
+    seletor.appendChild(criarOpcao('', 'Selecione...'))
+    clientes.forEach((cliente) => {
+      seletor.appendChild(criarOpcao(String(cliente.id), cliente.nome))
+    })
 
     if (clienteSelecionadoId) {
       seletor.value = String(clienteSelecionadoId)
     }
-
-    seletor.addEventListener('change', () => {
-      clienteSelecionadoId = seletor.value ? Number(seletor.value) : null
-      petEmEdicao = null
-      alternarAreaPets()
-    })
 
     alternarAreaPets()
   } catch (erro) {
@@ -277,15 +284,7 @@ function alternarAreaPets() {
   area.style.display = clienteSelecionadoId ? 'block' : 'none'
   if (!clienteSelecionadoId) return
 
-  const form = document.getElementById('form-pet') as HTMLFormElement
-  form.addEventListener('submit', salvarPet)
-
-  const botaoCancelar = document.getElementById('cancelar-edicao-pet')
-  botaoCancelar?.addEventListener('click', () => {
-    petEmEdicao = null
-    renderPets()
-  })
-
+  atualizarFormPets()
   carregarPets()
 }
 
@@ -294,31 +293,41 @@ async function carregarPets() {
   const corpoTabela = document.getElementById('lista-pets') as HTMLTableSectionElement
   try {
     const pets = await window.api.pets.listarPorCliente(clienteSelecionadoId)
-    corpoTabela.innerHTML = pets
-      .map(
-        (pet) => `
-        <tr>
-          <td>${pet.nome}</td>
-          <td>${pet.especie}</td>
-          <td>${pet.raca}</td>
-          <td>
-            <button data-editar="${pet.id}">Editar</button>
-            <button data-excluir="${pet.id}" class="botao-perigo">Excluir</button>
-          </td>
-        </tr>`
-      )
-      .join('')
+    corpoTabela.replaceChildren()
 
-    corpoTabela.querySelectorAll<HTMLButtonElement>('[data-editar]').forEach((botao) => {
-      botao.addEventListener('click', () => {
-        const id = Number(botao.dataset.editar)
-        petEmEdicao = pets.find((p) => p.id === id) ?? null
-        renderPets()
+    pets.forEach((pet) => {
+      const linha = document.createElement('tr')
+
+      const celulaNome = document.createElement('td')
+      celulaNome.textContent = pet.nome
+
+      const celulaEspecie = document.createElement('td')
+      celulaEspecie.textContent = pet.especie
+
+      const celulaRaca = document.createElement('td')
+      celulaRaca.textContent = pet.raca
+
+      const celulaAcoes = document.createElement('td')
+      const botaoEditar = document.createElement('button')
+      botaoEditar.textContent = 'Editar'
+      botaoEditar.addEventListener('click', () => {
+        petEmEdicao = pet
+        atualizarFormPets()
       })
-    })
 
-    corpoTabela.querySelectorAll<HTMLButtonElement>('[data-excluir]').forEach((botao) => {
-      botao.addEventListener('click', () => excluirPet(Number(botao.dataset.excluir)))
+      const botaoExcluir = document.createElement('button')
+      botaoExcluir.textContent = 'Excluir'
+      botaoExcluir.classList.add('botao-perigo')
+      botaoExcluir.addEventListener('click', () => excluirPet(pet.id))
+
+      celulaAcoes.appendChild(botaoEditar)
+      celulaAcoes.appendChild(botaoExcluir)
+
+      linha.appendChild(celulaNome)
+      linha.appendChild(celulaEspecie)
+      linha.appendChild(celulaRaca)
+      linha.appendChild(celulaAcoes)
+      corpoTabela.appendChild(linha)
     })
 
     definirStatus(`${pets.length} pet(s) carregado(s) para este tutor.`)
@@ -339,9 +348,7 @@ async function salvarPet(evento: SubmitEvent) {
     id_cliente: clienteSelecionadoId,
   }
 
-  const botaoSalvar = (evento.target as HTMLFormElement).querySelector(
-    'button[type="submit"]'
-  ) as HTMLButtonElement
+  const botaoSalvar = document.getElementById('botao-salvar-pet') as HTMLButtonElement
   botaoSalvar.disabled = true
   botaoSalvar.textContent = 'Salvando...'
 
@@ -354,7 +361,8 @@ async function salvarPet(evento: SubmitEvent) {
       definirStatus('Pet cadastrado com sucesso.')
     }
     petEmEdicao = null
-    renderPets()
+    atualizarFormPets()
+    await carregarPets()
   } catch (erro) {
     definirStatus(mensagemDeErro(erro, 'Erro ao salvar pet.'), true)
     console.error(erro)
@@ -376,70 +384,66 @@ async function excluirPet(id: number) {
 
 // Aba de Consultas
 
-async function renderConsultas() {
-  const conteudo = document.getElementById('secao-consultas') as HTMLElement
-  conteudo.innerHTML = `
-    <section class="painel">
-      <h2>Selecione o tutor e o pet</h2>
-      <label>Tutor
-        <select id="seletor-cliente-consultas"><option value="">Carregando...</option></select>
-      </label>
-      <label>Pet
-        <select id="seletor-pet-consultas" disabled><option value="">Selecione um tutor primeiro</option></select>
-      </label>
-    </section>
-    <section class="painel" id="area-consultas" style="display:none">
-      <h2>${consultaEmEdicao ? 'Editar consulta' : 'Nova consulta'}</h2>
-      <form id="form-consulta" class="formulario">
-        <label>Data
-          <input type="date" id="consulta-data" required value="${consultaEmEdicao?.data ?? ''}" />
-        </label>
-        <label>Hora
-          <input type="time" id="consulta-hora" required value="${consultaEmEdicao?.hora ?? ''}" />
-        </label>
-        <label>Sintomas / descrição
-          <textarea id="consulta-sintomas" required>${consultaEmEdicao?.descricao_sintomas ?? ''}</textarea>
-        </label>
-        <label>Valor (R$)
-          <input type="number" id="consulta-valor" step="0.01" min="0" required value="${consultaEmEdicao?.valor ?? ''}" />
-        </label>
-        <div class="acoes-formulario">
-          <button type="submit">${consultaEmEdicao ? 'Salvar alterações' : 'Registrar consulta'}</button>
-          ${consultaEmEdicao ? '<button type="button" id="cancelar-edicao-consulta">Cancelar</button>' : ''}
-        </div>
-      </form>
-      <h2>Histórico de consultas</h2>
-      <table class="tabela">
-        <thead><tr><th>Data</th><th>Hora</th><th>Sintomas</th><th>Valor</th><th>Ações</th></tr></thead>
-        <tbody id="lista-consultas"></tbody>
-      </table>
-    </section>
-  `
+function atualizarFormConsultas() {
+  const titulo = document.getElementById('titulo-form-consulta') as HTMLHeadingElement
+  const data = document.getElementById('consulta-data') as HTMLInputElement
+  const hora = document.getElementById('consulta-hora') as HTMLInputElement
+  const sintomas = document.getElementById('consulta-sintomas') as HTMLTextAreaElement
+  const valor = document.getElementById('consulta-valor') as HTMLInputElement
+  const botaoSalvar = document.getElementById('botao-salvar-consulta') as HTMLButtonElement
+  const botaoCancelar = document.getElementById('cancelar-edicao-consulta') as HTMLButtonElement
 
+  titulo.textContent = consultaEmEdicao ? 'Editar consulta' : 'Nova consulta'
+  data.value = consultaEmEdicao?.data ?? ''
+  hora.value = consultaEmEdicao?.hora ?? ''
+  sintomas.value = consultaEmEdicao?.descricao_sintomas ?? ''
+  valor.value = consultaEmEdicao ? String(consultaEmEdicao.valor) : ''
+  botaoSalvar.textContent = consultaEmEdicao ? 'Salvar alterações' : 'Registrar consulta'
+  botaoCancelar.hidden = !consultaEmEdicao
+}
+
+function iniciarFormConsultas() {
+  const form = document.getElementById('form-consulta') as HTMLFormElement
+  form.addEventListener('submit', salvarConsulta)
+
+  const botaoCancelar = document.getElementById('cancelar-edicao-consulta') as HTMLButtonElement
+  botaoCancelar.addEventListener('click', () => {
+    consultaEmEdicao = null
+    atualizarFormConsultas()
+  })
+}
+
+function iniciarSeletoresConsultas() {
   const seletorCliente = document.getElementById('seletor-cliente-consultas') as HTMLSelectElement
   const seletorPet = document.getElementById('seletor-pet-consultas') as HTMLSelectElement
 
+  seletorCliente.addEventListener('change', async () => {
+    clienteSelecionadoId = seletorCliente.value ? Number(seletorCliente.value) : null
+    petSelecionadoId = null
+    consultaEmEdicao = null
+    await atualizarSeletorPet()
+    alternarAreaConsultas()
+  })
+
+  seletorPet.addEventListener('change', () => {
+    petSelecionadoId = seletorPet.value ? Number(seletorPet.value) : null
+    consultaEmEdicao = null
+    alternarAreaConsultas()
+  })
+}
+
+async function renderConsultas() {
+  const seletorCliente = document.getElementById('seletor-cliente-consultas') as HTMLSelectElement
+
   try {
     const clientes = await window.api.clientes.listar()
-    seletorCliente.innerHTML =
-      '<option value="">Selecione...</option>' +
-      clientes.map((c) => `<option value="${c.id}">${c.nome}</option>`).join('')
+    seletorCliente.replaceChildren()
+    seletorCliente.appendChild(criarOpcao('', 'Selecione...'))
+    clientes.forEach((cliente) => {
+      seletorCliente.appendChild(criarOpcao(String(cliente.id), cliente.nome))
+    })
 
     if (clienteSelecionadoId) seletorCliente.value = String(clienteSelecionadoId)
-
-    seletorCliente.addEventListener('change', async () => {
-      clienteSelecionadoId = seletorCliente.value ? Number(seletorCliente.value) : null
-      petSelecionadoId = null
-      consultaEmEdicao = null
-      await atualizarSeletorPet()
-      alternarAreaConsultas()
-    })
-
-    seletorPet.addEventListener('change', () => {
-      petSelecionadoId = seletorPet.value ? Number(seletorPet.value) : null
-      consultaEmEdicao = null
-      alternarAreaConsultas()
-    })
 
     if (clienteSelecionadoId) {
       await atualizarSeletorPet()
@@ -453,8 +457,10 @@ async function renderConsultas() {
 
 async function atualizarSeletorPet() {
   const seletorPet = document.getElementById('seletor-pet-consultas') as HTMLSelectElement
+  seletorPet.replaceChildren()
+
   if (!clienteSelecionadoId) {
-    seletorPet.innerHTML = '<option value="">Selecione um tutor primeiro</option>'
+    seletorPet.appendChild(criarOpcao('', 'Selecione um tutor primeiro'))
     seletorPet.disabled = true
     return
   }
@@ -462,13 +468,16 @@ async function atualizarSeletorPet() {
   try {
     const pets = await window.api.pets.listarPorCliente(clienteSelecionadoId)
     if (pets.length === 0) {
-      seletorPet.innerHTML = '<option value="">Este tutor não tem pets cadastrados</option>'
+      seletorPet.appendChild(criarOpcao('', 'Este tutor não tem pets cadastrados'))
       seletorPet.disabled = true
       return
     }
-    seletorPet.innerHTML =
-      '<option value="">Selecione...</option>' +
-      pets.map((p) => `<option value="${p.id}">${p.nome}</option>`).join('')
+
+    seletorPet.appendChild(criarOpcao('', 'Selecione...'))
+    pets.forEach((pet) => {
+      seletorPet.appendChild(criarOpcao(String(pet.id), pet.nome))
+    })
+
     seletorPet.disabled = false
     if (petSelecionadoId) seletorPet.value = String(petSelecionadoId)
   } catch (erro) {
@@ -482,15 +491,7 @@ function alternarAreaConsultas() {
   area.style.display = petSelecionadoId ? 'block' : 'none'
   if (!petSelecionadoId) return
 
-  const form = document.getElementById('form-consulta') as HTMLFormElement
-  form.addEventListener('submit', salvarConsulta)
-
-  const botaoCancelar = document.getElementById('cancelar-edicao-consulta')
-  botaoCancelar?.addEventListener('click', () => {
-    consultaEmEdicao = null
-    renderConsultas()
-  })
-
+  atualizarFormConsultas()
   carregarConsultas()
 }
 
@@ -499,32 +500,45 @@ async function carregarConsultas() {
   const corpoTabela = document.getElementById('lista-consultas') as HTMLTableSectionElement
   try {
     const consultas = await window.api.consultas.listarPorPet(petSelecionadoId)
-    corpoTabela.innerHTML = consultas
-      .map(
-        (consulta) => `
-        <tr>
-          <td>${consulta.data}</td>
-          <td>${consulta.hora}</td>
-          <td>${consulta.descricao_sintomas}</td>
-          <td>R$&nbsp;${Number(consulta.valor).toFixed(2)}</td>
-          <td>
-            <button data-editar="${consulta.id}">Editar</button>
-            <button data-excluir="${consulta.id}" class="botao-perigo">Excluir</button>
-          </td>
-        </tr>`
-      )
-      .join('')
+    corpoTabela.replaceChildren()
 
-    corpoTabela.querySelectorAll<HTMLButtonElement>('[data-editar]').forEach((botao) => {
-      botao.addEventListener('click', () => {
-        const id = Number(botao.dataset.editar)
-        consultaEmEdicao = consultas.find((c) => c.id === id) ?? null
-        renderConsultas()
+    consultas.forEach((consulta) => {
+      const linha = document.createElement('tr')
+
+      const celulaData = document.createElement('td')
+      celulaData.textContent = consulta.data
+
+      const celulaHora = document.createElement('td')
+      celulaHora.textContent = consulta.hora
+
+      const celulaSintomas = document.createElement('td')
+      celulaSintomas.textContent = consulta.descricao_sintomas
+
+      const celulaValor = document.createElement('td')
+      celulaValor.textContent = `R$ ${Number(consulta.valor).toFixed(2)}`
+
+      const celulaAcoes = document.createElement('td')
+      const botaoEditar = document.createElement('button')
+      botaoEditar.textContent = 'Editar'
+      botaoEditar.addEventListener('click', () => {
+        consultaEmEdicao = consulta
+        atualizarFormConsultas()
       })
-    })
 
-    corpoTabela.querySelectorAll<HTMLButtonElement>('[data-excluir]').forEach((botao) => {
-      botao.addEventListener('click', () => excluirConsulta(Number(botao.dataset.excluir)))
+      const botaoExcluir = document.createElement('button')
+      botaoExcluir.textContent = 'Excluir'
+      botaoExcluir.classList.add('botao-perigo')
+      botaoExcluir.addEventListener('click', () => excluirConsulta(consulta.id))
+
+      celulaAcoes.appendChild(botaoEditar)
+      celulaAcoes.appendChild(botaoExcluir)
+
+      linha.appendChild(celulaData)
+      linha.appendChild(celulaHora)
+      linha.appendChild(celulaSintomas)
+      linha.appendChild(celulaValor)
+      linha.appendChild(celulaAcoes)
+      corpoTabela.appendChild(linha)
     })
 
     definirStatus(`${consultas.length} consulta(s) no histórico deste pet.`)
@@ -551,9 +565,7 @@ async function salvarConsulta(evento: SubmitEvent) {
     return
   }
 
-  const botaoSalvar = (evento.target as HTMLFormElement).querySelector(
-    'button[type="submit"]'
-  ) as HTMLButtonElement
+  const botaoSalvar = document.getElementById('botao-salvar-consulta') as HTMLButtonElement
   botaoSalvar.disabled = true
   botaoSalvar.textContent = 'Salvando...'
 
@@ -566,7 +578,8 @@ async function salvarConsulta(evento: SubmitEvent) {
       definirStatus('Consulta registrada com sucesso.')
     }
     consultaEmEdicao = null
-    renderConsultas()
+    atualizarFormConsultas()
+    await carregarConsultas()
   } catch (erro) {
     definirStatus(mensagemDeErro(erro, 'Erro ao salvar consulta.'), true)
     console.error(erro)
@@ -647,4 +660,9 @@ function configurarBusca() {
 
 iniciarNavegacao()
 configurarBusca()
+iniciarFormClientes()
+iniciarFormPets()
+iniciarSeletorPets()
+iniciarFormConsultas()
+iniciarSeletoresConsultas()
 renderizarAba()
