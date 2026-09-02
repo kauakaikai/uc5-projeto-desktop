@@ -83,9 +83,15 @@ export async function buscarPets(termo: string): Promise<PetComTutor[]> {
   }
 
   const resultado = await pool.query<PetComTutor>(
-    `SELECT pets.*, clientes.nome AS nome_cliente
+    `SELECT 
+       pets.id AS id, 
+       pets.nome AS nome, 
+       pets.especie AS especie, 
+       pets.raca AS raca, 
+       pets.id_cliente AS id_cliente, 
+       clientes.nome AS nome_cliente
      FROM pets
-     JOIN clientes ON clientes.id = pets.id_cliente
+     LEFT JOIN clientes ON clientes.id = pets.id_cliente
      WHERE pets.nome ILIKE $1 OR clientes.nome ILIKE $1
      ORDER BY pets.nome`,
     [`%${termoBusca}%`]

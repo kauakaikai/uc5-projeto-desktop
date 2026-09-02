@@ -174,11 +174,17 @@ async function carregarClientes() {
 
 async function salvarCliente(evento: SubmitEvent) {
   evento.preventDefault()
-  const dados: NovoCliente = {
-    nome: (document.getElementById('cliente-nome') as HTMLInputElement).value,
-    telefone: (document.getElementById('cliente-telefone') as HTMLInputElement).value,
-    email: (document.getElementById('cliente-email') as HTMLInputElement).value,
+
+  const nome = (document.getElementById('cliente-nome') as HTMLInputElement).value.trim()
+  const telefone = (document.getElementById('cliente-telefone') as HTMLInputElement).value.trim()
+  const email = (document.getElementById('cliente-email') as HTMLInputElement).value.trim()
+
+  if (!nome || !telefone || !email) {
+    definirStatus('Preencha todos os campos do cliente antes de salvar.', true)
+    return
   }
+
+  const dados: NovoCliente = { nome, telefone, email }
 
   const botaoSalvar = document.getElementById('botao-salvar-cliente') as HTMLButtonElement
   botaoSalvar.disabled = true
@@ -341,10 +347,19 @@ async function salvarPet(evento: SubmitEvent) {
   evento.preventDefault()
   if (!clienteSelecionadoId) return
 
+  const nome = (document.getElementById('pet-nome') as HTMLInputElement).value.trim()
+  const especie = (document.getElementById('pet-especie') as HTMLInputElement).value.trim()
+  const raca = (document.getElementById('pet-raca') as HTMLInputElement).value.trim()
+
+  if (!nome || !especie || !raca) {
+    definirStatus('Preencha todos os campos do pet antes de salvar.', true)
+    return
+  }
+
   const dados: NovoPet = {
-    nome: (document.getElementById('pet-nome') as HTMLInputElement).value,
-    especie: (document.getElementById('pet-especie') as HTMLInputElement).value,
-    raca: (document.getElementById('pet-raca') as HTMLInputElement).value,
+    nome,
+    especie,
+    raca,
     id_cliente: clienteSelecionadoId,
   }
 
@@ -552,17 +567,29 @@ async function salvarConsulta(evento: SubmitEvent) {
   evento.preventDefault()
   if (!petSelecionadoId) return
 
-  const dados: NovaConsulta = {
-    id_pet: petSelecionadoId,
-    data: (document.getElementById('consulta-data') as HTMLInputElement).value,
-    hora: (document.getElementById('consulta-hora') as HTMLInputElement).value,
-    descricao_sintomas: (document.getElementById('consulta-sintomas') as HTMLTextAreaElement).value,
-    valor: Number((document.getElementById('consulta-valor') as HTMLInputElement).value),
+  const data = (document.getElementById('consulta-data') as HTMLInputElement).value.trim()
+  const hora = (document.getElementById('consulta-hora') as HTMLInputElement).value.trim()
+  const descricao_sintomas = (document.getElementById('consulta-sintomas') as HTMLTextAreaElement).value.trim()
+  const valorTexto = (document.getElementById('consulta-valor') as HTMLInputElement).value.trim()
+
+  if (!data || !hora || !descricao_sintomas || !valorTexto) {
+    definirStatus('Preencha todos os campos da consulta antes de salvar.', true)
+    return
   }
 
-  if (Number.isNaN(dados.valor) || dados.valor < 0) {
+  const valor = Number(valorTexto)
+
+  if (Number.isNaN(valor) || valor < 0) {
     definirStatus('O valor da consulta precisa ser um número maior ou igual a zero.', true)
     return
+  }
+
+  const dados: NovaConsulta = {
+    id_pet: petSelecionadoId,
+    data,
+    hora,
+    descricao_sintomas,
+    valor,
   }
 
   const botaoSalvar = document.getElementById('botao-salvar-consulta') as HTMLButtonElement
@@ -617,6 +644,11 @@ function configurarBusca() {
     listaResultados.replaceChildren()
     filtroEspecie.value = ''
     filtroEspecie.disabled = true
+
+    if (!campoTermo.value.trim()) {
+      erroBusca.textContent = 'Digite um termo para realizar a busca.'
+      return
+    }
 
     try {
       const resultados = await window.api.pets.buscar(campoTermo.value)
