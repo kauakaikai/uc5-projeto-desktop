@@ -26,10 +26,9 @@
     "appId": "com.senac.petcare",
     "productName": "PetCare",
     "directories": { "output": "release" },
-    "files": [
-      "dist/**/*",
-      "!.env",
-      "!*.env"
+    "files": ["**/*", "!.env"],
+    "extraFiles": [
+      { "from": ".env", "to": ".env" }
     ],
     "win": {
       "target": "nsis",

@@ -4,7 +4,7 @@ import { app } from 'electron'
 import path from 'path'
 
 const caminhoEnv = app.isPackaged
-  ? path.join(app.getAppPath(), '.env')
+  ? path.join(path.dirname(app.getPath('exe')), '.env')
   : path.join(process.cwd(), '.env')
 
 dotenv.config({ path: caminhoEnv })
