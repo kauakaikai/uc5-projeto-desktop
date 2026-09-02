@@ -1,11 +1,17 @@
-# electron-vite-ts-boilerplate
+# 🐾 PetCare
 
-Projeto base mínimo para aplicações desktop com **Electron + Vite + TypeScript**, já com
-comunicação entre processos (IPC) configurada de forma segura e empacotamento Windows
-que dispensa privilégios de administrador.
+Sistema desktop de gestão para clínica veterinária: cadastro de tutores, dos pets de
+cada tutor e do histórico de consultas. Desenvolvido em **Electron + Vite +
+TypeScript**, com banco de dados **PostgreSQL**, como Projeto Integrador da UC5
+(Desenvolver Aplicações Desktop) - SENAC RN, Mossoró.
 
-O objetivo é ser um ponto de partida enxuto: nada de framework de interface, roteador ou
-gerenciador de estado. Só o esqueleto funcionando, para você acrescentar o que precisar.
+## Funcionalidades
+
+- Cadastro, edição e exclusão de **clientes (tutores)**
+- Cadastro, edição e exclusão de **pets**, vinculados a um tutor
+- Registro de **consultas** (data, hora, sintomas e valor), vinculadas a um pet
+- Busca de pets por nome do pet ou do tutor, com filtro por espécie
+- Funciona sem conexão com o banco: mostra aviso amigável em vez de travar
 
 ## Stack
 
@@ -13,74 +19,72 @@ gerenciador de estado. Só o esqueleto funcionando, para você acrescentar o que
 |---|---|
 | Electron | Runtime desktop (processo Main em Node.js, Renderer em Chromium) |
 | Vite | Servidor de desenvolvimento e build do Renderer |
-| `vite-plugin-electron` | Compila `main.ts` e `preload.ts` junto com o Vite |
-| TypeScript | Modo `strict` ligado |
-| `electron-builder` | Geração do instalador |
-| `pg` e `dotenv` | Já declarados, para quem for conectar a um PostgreSQL |
-
-As versões exatas estão fixadas no `package-lock.json`.
+| TypeScript | Modo `strict` ligado, sem `any` |
+| PostgreSQL (`pg`) | Banco de dados relacional |
+| `electron-builder` | Geração do instalador Windows (NSIS, per-user, sem UAC) |
 
 ## Requisitos
 
-Node.js 20 ou superior e npm.
+- Node.js 20 ou superior e npm
+- Um banco PostgreSQL acessível (local ou na nuvem, ex: [Neon](https://neon.tech))
 
-## Uso
+## Configuração do banco
+
+1. Crie um arquivo `.env` na raiz do projeto (use `.env.example` como modelo):
+   ```
+   DATABASE_URL=postgresql://usuario:senha@host:5432/nome_do_banco?sslmode=require
+   ```
+2. Aplique o schema no seu banco (cria as tabelas `clientes`, `pets` e `consultas`,
+   já com as chaves estrangeiras):
+   ```bash
+   psql "$DATABASE_URL" -f sql/schema.sql
+   ```
+
+## Rodando em desenvolvimento
 
 ```bash
 npm install
-npm start          # desenvolvimento, com recarga automática do Renderer
-npm run build      # verifica os tipos, gera o bundle e empacota o instalador
+npm run dev
 ```
 
-> **Windows com execução de scripts bloqueada por política:** se o PowerShell recusar
-> `npm`, prefixe os comandos com `npx` em um prompt do CMD - `npx npm install`,
-> `npx npm start`. O `npx` invoca o binário diretamente, sem passar pelo script `.ps1`
-> que a política bloqueia.
+## Gerando o instalador
+
+```bash
+npm run build
+```
+
+Isso confere os tipos, compila o Renderer, e gera o instalador Windows em
+`release/PetCare Setup <versão>.exe`. O instalador não pede administrador
+(per-user, sem UAC) e cria atalho na área de trabalho e no menu Iniciar.
+
+> O arquivo `.env` **não** é distribuído dentro do instalador. Quem for rodar o
+> PetCare já instalado precisa da sua própria `DATABASE_URL` configurada.
 
 ## Estrutura
 
 ```text
 src/
-  main.ts         processo Main: cria a BrowserWindow e registra os canais IPC
+  main.ts         processo Main: cria a BrowserWindow, o menu e os canais IPC
   preload.ts      ponte entre os processos, via contextBridge
-  renderer.ts     código da interface, executado no Chromium
+  renderer.ts     código da interface (sem innerHTML - createElement/textContent)
+  connection.ts   conexão única com o PostgreSQL (Pool)
+  db.ts           funções de acesso ao banco (clientes, pets, consultas)
+  types.ts        tipos compartilhados entre Main e Renderer
   style.css       estilos da página
-  vite-env.d.ts   tipos do cliente Vite
-index.html        documento carregado pela janela
+index.html        estrutura fixa das telas (abas de Clientes, Pets, Consultas e Busca)
+sql/schema.sql    criação das tabelas e chaves estrangeiras
 vite.config.ts    configuração do Vite e dos pontos de entrada do Electron
 ```
 
-## O que já vem pronto
+## Segurança
 
-**IPC seguro.** O `preload.ts` expõe uma API mínima ao Renderer usando `contextBridge`,
-com `contextIsolation: true` e `nodeIntegration: false`. O Renderer nunca recebe acesso
-direto ao Node.js. O canal de exemplo (`canal-ping`) mostra o caminho completo de ida e
-volta e serve de molde para os seus.
+- `contextIsolation: true` e `nodeIntegration: false` - o Renderer nunca tem acesso
+  direto ao Node.js, só às funções expostas pelo `preload.ts` via `contextBridge`.
+- Todas as consultas SQL usam parâmetros (`$1`, `$2`...) - nunca concatenação de texto.
+- Nenhum SQL nem credencial trafega pelo Renderer; quem fala com o banco é sempre o
+  processo Main.
 
-Para declarar um canal novo: registre o `ipcMain.handle` no `main.ts`, exponha o método
-correspondente no `preload.ts` e acrescente a assinatura ao bloco `declare global` do
-`renderer.ts`, para manter a tipagem de ponta a ponta.
+## Autoria
 
-**Alternância entre desenvolvimento e produção.** O `main.ts` decide entre `loadURL` e
-`loadFile` conforme `process.env.VITE_DEV_SERVER_URL`: em desenvolvimento a janela aponta
-para o servidor do Vite; no aplicativo empacotado, para o HTML já compilado.
-
-**Instalador por usuário.** A configuração NSIS usa `perMachine: false` e
-`requestedExecutionLevel: asInvoker`, então o instalador gerado não dispara o prompt de
-UAC nem exige conta de administrador. Útil em máquinas corporativas ou compartilhadas.
-
-## Personalização inicial
-
-Ao começar um projeto a partir daqui, ajuste:
-
-- `name` e `description` no `package.json`;
-- `appId` e `productName` no bloco `build` do `package.json`;
-- a tag `<title>` do `index.html` - ela **sobrescreve** a opção `title` passada à
-  `BrowserWindow`, então mudar só no `main.ts` não altera a barra da janela.
-
-## Observações
-
-Alterações em `src/main.ts` não são recarregadas automaticamente: o Vite atualiza apenas
-o Renderer. Depois de mexer no processo Main, reinicie a aplicação.
-
-O `.gitignore` já cobre `node_modules/`, as saídas de build e o `.env`.
+Desenvolvido por Kauã, como Projeto Integrador da UC5 do SENAC RN - Mossoró, turma
+2025.20.95.1, sob orientação do instrutor Thiago.
