@@ -26,9 +26,103 @@
       </nav>
 
       <main>
-        <section id="secao-clientes" class="secao-aba"></section>
-        <section id="secao-pets" class="secao-aba"></section>
-        <section id="secao-consultas" class="secao-aba"></section>
+        <section id="secao-clientes" class="secao-aba">
+          <section class="painel">
+            <h2 id="titulo-form-cliente">Novo cliente</h2>
+            <form id="form-cliente" class="formulario">
+              <label>Nome
+                <input type="text" id="cliente-nome" required />
+              </label>
+              <label>Telefone
+                <input type="text" id="cliente-telefone" required />
+              </label>
+              <label>Email
+                <input type="email" id="cliente-email" required />
+              </label>
+              <div class="acoes-formulario">
+                <button type="submit" id="botao-salvar-cliente">Cadastrar</button>
+                <button type="button" id="cancelar-edicao-cliente" hidden>Cancelar</button>
+              </div>
+            </form>
+          </section>
+          <section class="painel">
+            <h2>Clientes cadastrados</h2>
+            <table class="tabela">
+              <thead>
+                <tr><th>Nome</th><th>Telefone</th><th>Email</th><th>Ações</th></tr>
+              </thead>
+              <tbody id="lista-clientes"></tbody>
+            </table>
+          </section>
+        </section>
+
+        <section id="secao-pets" class="secao-aba">
+          <section class="painel">
+            <h2>Selecione o tutor</h2>
+            <select id="seletor-cliente-pets"><option value="">Carregando...</option></select>
+          </section>
+          <section class="painel" id="area-pets" style="display:none">
+            <h2 id="titulo-form-pet">Novo pet</h2>
+            <form id="form-pet" class="formulario">
+              <label>Nome do pet
+                <input type="text" id="pet-nome" required />
+              </label>
+              <label>Espécie
+                <input type="text" id="pet-especie" required placeholder="Cachorro, gato..." />
+              </label>
+              <label>Raça
+                <input type="text" id="pet-raca" required />
+              </label>
+              <div class="acoes-formulario">
+                <button type="submit" id="botao-salvar-pet">Cadastrar pet</button>
+                <button type="button" id="cancelar-edicao-pet" hidden>Cancelar</button>
+              </div>
+            </form>
+            <h2>Pets deste tutor</h2>
+            <table class="tabela">
+              <thead><tr><th>Nome</th><th>Espécie</th><th>Raça</th><th>Ações</th></tr></thead>
+              <tbody id="lista-pets"></tbody>
+            </table>
+          </section>
+        </section>
+
+        <section id="secao-consultas" class="secao-aba">
+          <section class="painel">
+            <h2>Selecione o tutor e o pet</h2>
+            <label>Tutor
+              <select id="seletor-cliente-consultas"><option value="">Carregando...</option></select>
+            </label>
+            <label>Pet
+              <select id="seletor-pet-consultas" disabled><option value="">Selecione um tutor primeiro</option></select>
+            </label>
+          </section>
+          <section class="painel" id="area-consultas" style="display:none">
+            <h2 id="titulo-form-consulta">Nova consulta</h2>
+            <form id="form-consulta" class="formulario">
+              <label>Data
+                <input type="date" id="consulta-data" required />
+              </label>
+              <label>Hora
+                <input type="time" id="consulta-hora" required />
+              </label>
+              <label>Sintomas / descrição
+                <textarea id="consulta-sintomas" required></textarea>
+              </label>
+              <label>Valor (R$)
+                <input type="number" id="consulta-valor" step="0.01" min="0" required />
+              </label>
+              <div class="acoes-formulario">
+                <button type="submit" id="botao-salvar-consulta">Registrar consulta</button>
+                <button type="button" id="cancelar-edicao-consulta" hidden>Cancelar</button>
+              </div>
+            </form>
+            <h2>Histórico de consultas</h2>
+            <table class="tabela">
+              <thead><tr><th>Data</th><th>Hora</th><th>Sintomas</th><th>Valor</th><th>Ações</th></tr></thead>
+              <tbody id="lista-consultas"></tbody>
+            </table>
+          </section>
+        </section>
 
         <section id="secao-busca" class="secao-aba painel">
           <h2>Buscar pet por nome do pet ou do tutor</h2>
