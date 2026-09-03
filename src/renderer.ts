@@ -104,6 +104,7 @@ function atualizarFormClientes() {
   nome.value = clienteEmEdicao?.nome ?? ''
   telefone.value = clienteEmEdicao?.telefone ?? ''
   email.value = clienteEmEdicao?.email ?? ''
+  botaoSalvar.disabled = false
   botaoSalvar.textContent = clienteEmEdicao ? 'Salvar alterações' : 'Cadastrar'
   botaoCancelar.hidden = !clienteEmEdicao
 }
@@ -233,6 +234,7 @@ function atualizarFormPets() {
   nome.value = petEmEdicao?.nome ?? ''
   especie.value = petEmEdicao?.especie ?? ''
   raca.value = petEmEdicao?.raca ?? ''
+  botaoSalvar.disabled = false
   botaoSalvar.textContent = petEmEdicao ? 'Salvar alterações' : 'Cadastrar pet'
   botaoCancelar.hidden = !petEmEdicao
 }
@@ -413,6 +415,7 @@ function atualizarFormConsultas() {
   hora.value = consultaEmEdicao?.hora ?? ''
   sintomas.value = consultaEmEdicao?.descricao_sintomas ?? ''
   valor.value = consultaEmEdicao ? String(consultaEmEdicao.valor) : ''
+  botaoSalvar.disabled = false
   botaoSalvar.textContent = consultaEmEdicao ? 'Salvar alterações' : 'Registrar consulta'
   botaoCancelar.hidden = !consultaEmEdicao
 }
